@@ -6,12 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "worker": "node worker/sendWorker.js",
     "lint": "eslint"
   },
   "dependencies": {
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
+  ,
+    "mongoose": "^7.6.0",
+    "nodemailer": "^6.9.3",
+    "node-cron": "^3.0.2"
+    ,
+    "dotenv": "^16.1.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
