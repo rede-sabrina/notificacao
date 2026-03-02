@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '../../../../lib/mongodb';
 import Notification from '../../../../models/Notification';
 import nodemailer from 'nodemailer';
+import { verifyTokenFromCookie } from '../../../../lib/auth';
 
 export async function POST(request: Request) {
-  // protect endpoint: require scheduler secret header
+  // protect endpoint: allow either scheduler secret header OR an authenticated admin cookie
   const expected = process.env.SCHEDULER_SECRET;
-  if (!expected) {
-    return new NextResponse(JSON.stringify({ ok: false, error: 'SCHEDULER_SECRET not configured on server' }), { status: 500 });
-  }
   const received = request.headers.get('x-scheduler-secret');
-  if (!received || received !== expected) {
-    return new NextResponse(JSON.stringify({ ok: false, error: 'Unauthorized' }), { status: 401 });
+  const auth = verifyTokenFromCookie(request.headers.get('cookie'));
+
+  if (!auth) {
+    // not authenticated via cookie, require scheduler secret
+    if (!expected) {
+      return new NextResponse(JSON.stringify({ ok: false, error: 'SCHEDULER_SECRET not configured on server' }), { status: 500 });
+    }
+    if (!received || received !== expected) {
+      return new NextResponse(JSON.stringify({ ok: false, error: 'Unauthorized' }), { status: 401 });
+    }
   }
 
   await connectToDatabase();
