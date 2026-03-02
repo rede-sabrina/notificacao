@@ -1,0 +1,16 @@
+name: Cron - send notifications
+
+on:
+  schedule:
+    # default: daily at 09:00 America/Sao_Paulo -> 12:00 UTC (adjust if needed)
+    - cron: '0 12 * * *'
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call send-now endpoint
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/notifications/send-now" \
+            -H "X-SCHEDULER-SECRET: ${{ secrets.SCHEDULER_SECRET }}" \
+            -H "Content-Type: application/json"
