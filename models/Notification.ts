@@ -1,4 +1,15 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface INotification extends Document {
+  title: string;
+  message: string;
+  recipients: string[];
+  recurring?: boolean;
+  dayOfMonth?: number;
+  sendDate?: Date;
+  active?: boolean;
+  lastSent?: Date;
+}
 
 const NotificationSchema = new Schema(
   {
@@ -14,4 +25,4 @@ const NotificationSchema = new Schema(
   { timestamps: true }
 );
 
-export default (mongoose.models.Notification as mongoose.Model<unknown>) || mongoose.model('Notification', NotificationSchema);
+export default (mongoose.models.Notification as mongoose.Model<INotification>) || mongoose.model<INotification>('Notification', NotificationSchema);
