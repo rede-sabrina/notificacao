@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-  const results: { id: string; to: string[]; status: string; error?: string }[] = [];
+  const results: { id: string; to: string[]; status: string; error?: string; info?: any }[] = [];
 
   try {
     console.log('Checking notifications for day', day, 'range', start.toISOString(), end.toISOString());
