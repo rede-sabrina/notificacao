@@ -61,7 +61,17 @@ async function sendNotification(notification) {
     to: toList,
     subject: notification.title,
     text: notification.message,
-    html: `<p>${notification.message}</p>`
+    html: (function(){
+      function escapeHtml(s){
+        return String(s)
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;')
+          .replace(/'/g,'&#039;');
+      }
+      return '<p>' + escapeHtml(notification.message).replace(/\r?\n/g,'<br/>') + '</p>';
+    })()
   };
 
   try {

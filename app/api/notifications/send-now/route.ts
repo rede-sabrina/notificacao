@@ -65,12 +65,23 @@ export async function POST(request: Request) {
       try {
         const from = process.env.FROM_EMAIL || process.env.SMTP_USER;
         const toList = n.recipients.join(', ');
+        function escapeHtml(str: string) {
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
+        const formattedHtml = `<p>${escapeHtml(n.message).replace(/\r?\n/g, '<br/>')}</p>`;
+
         const mail = {
           from,
           to: toList,
           subject: n.title,
           text: n.message,
-          html: `<p>${n.message}</p>`
+          html: formattedHtml
         };
 
         console.log('Sending notification', String(n._id), 'to', n.recipients);
