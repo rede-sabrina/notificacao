@@ -7,15 +7,21 @@ import { verifyTokenFromCookie } from '../../../../lib/auth';
 export async function POST(request: Request) {
   // protect endpoint: allow either scheduler secret header OR an authenticated admin cookie
   const expected = process.env.SCHEDULER_SECRET;
-  const received = request.headers.get('x-scheduler-secret');
+  // Check both lowercase and original case for compatibility
+  const received = request.headers.get('x-scheduler-secret') || request.headers.get('X-SCHEDULER-SECRET');
   const auth = verifyTokenFromCookie(request.headers.get('cookie'));
+
+  console.log('[send-now] Triggered at', new Date().toISOString());
+  console.log('[send-now] Auth method:', auth ? 'cookie' : 'scheduler-secret');
 
   if (!auth) {
     // not authenticated via cookie, require scheduler secret
     if (!expected) {
+      console.error('[send-now] SCHEDULER_SECRET not configured');
       return new NextResponse(JSON.stringify({ ok: false, error: 'SCHEDULER_SECRET not configured on server' }), { status: 500 });
     }
     if (!received || received !== expected) {
+      console.error('[send-now] Unauthorized: secret mismatch or missing');
       return new NextResponse(JSON.stringify({ ok: false, error: 'Unauthorized' }), { status: 401 });
     }
   }

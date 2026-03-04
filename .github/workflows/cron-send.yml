@@ -4,6 +4,7 @@ on:
   schedule:
     # default: daily at 09:00 America/Sao_Paulo -> 12:00 UTC (adjust if needed)
     - cron: '0 12 * * *'
+  workflow_dispatch:  # Permite executar manualmente
 
 jobs:
   call:
@@ -11,6 +12,79 @@ jobs:
     steps:
       - name: Call send-now endpoint
         run: |
-          curl -s -X POST "${{ secrets.APP_URL }}/api/notifications/send-now" \
+          echo "=========================================="
+          echo "Notification Job Started"
+          echo "Time: $(date)"
+          echo "=========================================="
+          
+          # Verificar se os secrets estão configurados
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "❌ ERROR: APP_URL secret is not configured!"
+            echo "Please add APP_URL to GitHub Secrets"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SCHEDULER_SECRET }}" ]; then
+            echo "❌ ERROR: SCHEDULER_SECRET is not configured!"
+            echo "Please add SCHEDULER_SECRET to GitHub Secrets"
+            exit 1
+          fi
+          
+          echo "✓ Secrets configured"
+          echo "Target URL: ${{ secrets.APP_URL }}/api/notifications/send-now"
+          echo ""
+          echo "Sending request..."
+          echo ""
+          
+          # Fazer requisição com output completo
+          http_code=$(curl -w "%{http_code}" -o /tmp/response.txt -X POST \
+            "${{ secrets.APP_URL }}/api/notifications/send-now" \
             -H "X-SCHEDULER-SECRET: ${{ secrets.SCHEDULER_SECRET }}" \
-            -H "Content-Type: application/json"
+            -H "Content-Type: application/json" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            -v 2>&1 | tee /tmp/curl_verbose.txt | tail -n1)
+          
+          echo ""
+          echo "=========================================="
+          echo "Response Details"
+          echo "=========================================="
+          echo "HTTP Status Code: $http_code"
+          echo ""
+          echo "Response Body:"
+          cat /tmp/response.txt || echo "(no response body)"
+          echo ""
+          echo ""
+          echo "Connection Details:"
+          grep -E "(Connected|SSL|TLS|Host|HTTP)" /tmp/curl_verbose.txt || echo "(no connection details)"
+          echo ""
+          
+          # Verificar resultado
+          if [ "$http_code" = "200" ]; then
+            echo "=========================================="
+            echo "✅ SUCCESS!"
+            echo "=========================================="
+            exit 0
+          elif [ "$http_code" = "401" ]; then
+            echo "=========================================="
+            echo "❌ ERROR: Unauthorized (401)"
+            echo "=========================================="
+            echo "The SCHEDULER_SECRET is incorrect or missing."
+            echo "Make sure the secret matches in both:"
+            echo "  1. GitHub Secrets (SCHEDULER_SECRET)"
+            echo "  2. Your deployed app environment variables"
+            exit 1
+          elif [ "$http_code" = "000" ]; then
+            echo "=========================================="
+            echo "❌ ERROR: Connection Failed"
+            echo "=========================================="
+            echo "Could not connect to the server."
+            echo "Check if APP_URL is correct and the app is running."
+            exit 1
+          else
+            echo "=========================================="
+            echo "❌ ERROR: Unexpected Status ($http_code)"
+            echo "=========================================="
+            echo "Check your application logs for more details."
+            exit 1
+          fi
