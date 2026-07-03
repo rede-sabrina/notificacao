@@ -54,15 +54,23 @@ export async function POST(request: Request) {
   const today = new Date();
   const day = today.getDate();
 
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  // Use local time range for today (00:00 to 23:59:59)
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
   const results: { id: string; to: string[]; status: string; error?: string; info?: any }[] = [];
 
   try {
     console.log('Checking notifications for day', day, 'range', start.toISOString(), end.toISOString());
     const recurring = await Notification.find({ active: true, recurring: true, dayOfMonth: day });
-    const ones = await Notification.find({ active: true, recurring: false, sendDate: { $gte: start, $lt: end } });
+    
+    // One-time notifications scheduled for today only
+    const ones = await Notification.find({ 
+      active: true, 
+      recurring: false, 
+      sendDate: { $gte: start, $lte: end }
+    });
+    
     console.log('Found', recurring.length, 'recurring and', ones.length, 'one-time notifications');
 
     const all = [...recurring, ...ones];

@@ -21,13 +21,26 @@ export async function POST(request: Request) {
 
   await connectToDatabase();
 
+  // Parse date as local time to avoid timezone issues
+  let parsedSendDate: Date | undefined = undefined;
+  if (sendDate) {
+    // If sendDate is in YYYY-MM-DD format, parse as local time
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(sendDate);
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch;
+      parsedSendDate = new Date(Number(year), Number(month) - 1, Number(day));
+    } else {
+      parsedSendDate = new Date(sendDate);
+    }
+  }
+
   const doc = await Notification.create({
     title,
     message,
     recipients,
     recurring: !!recurring,
     dayOfMonth: recurring ? Number(dayOfMonth) : undefined,
-    sendDate: sendDate ? new Date(sendDate) : undefined
+    sendDate: parsedSendDate
   });
 
   return new NextResponse(JSON.stringify(doc), { status: 201 });

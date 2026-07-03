@@ -103,10 +103,14 @@ cron.schedule(schedulePattern, async () => {
       await sendNotification(n);
     }
 
-    // one-time notifications scheduled for today (date match)
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    const ones = await Notification.find({ active: true, recurring: false, sendDate: { $gte: start, $lt: end } });
+    // one-time notifications scheduled for today or earlier that haven't been sent yet
+    const now = new Date();
+    const ones = await Notification.find({ 
+      active: true, 
+      recurring: false, 
+      sendDate: { $lte: now },
+      lastSent: { $exists: false }
+    });
     console.log('Worker found one-time:', ones.length);
     for (const n of ones) {
       await sendNotification(n);
@@ -116,4 +120,4 @@ cron.schedule(schedulePattern, async () => {
   }
 });
 
-console.log('Worker started — scheduled to run daily at 00:00');
+console.log('Worker started — scheduled to run at', schedulePattern);
