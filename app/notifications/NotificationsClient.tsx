@@ -48,6 +48,23 @@ export default function NotificationsClient() {
   const [search, setSearch] = useState("");
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Helper function to format UTC date string to local date without timezone issues
+  function formatDateUTC(dateString: string): string {
+    const dateObj = new Date(dateString);
+    const year = dateObj.getUTCFullYear();
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  }
+
+  function formatDateInputUTC(dateString: string): string {
+    const dateObj = new Date(dateString);
+    const year = dateObj.getUTCFullYear();
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   useEffect(() => {
     fetchList();
   }, []);
@@ -189,15 +206,24 @@ export default function NotificationsClient() {
 
   function handleEdit(item: NotificationItem) {
     setEditingId(item._id);
+    // Parse date correctly to avoid timezone issues
+    let sendDateStr = "";
+    if (item.sendDate) {
+      const dateObj = new Date(item.sendDate);
+      // Extract date parts in UTC to avoid timezone conversion
+      const year = dateObj.getUTCFullYear();
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getUTCDate()).padStart(2, '0');
+      sendDateStr = `${year}-${month}-${day}`;
+    }
+    
     setForm({
       title: item.title,
       message: item.message,
       recipients: item.recipients.join(", "),
       recurring: !!item.recurring,
       dayOfMonth: item.dayOfMonth ?? 1,
-      sendDate: item.sendDate
-        ? new Date(item.sendDate).toISOString().substring(0, 10)
-        : "",
+      sendDate: sendDateStr,
       installmentMode: false,
       installmentDates: [],
     });
@@ -245,6 +271,10 @@ export default function NotificationsClient() {
     }
     if (item.sendDate) {
       const isInstallment = item.title.includes("Parcela");
+      // Parse date correctly to avoid timezone issues
+      const dateObj = new Date(item.sendDate);
+      const formattedDate = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      
       if (isInstallment) {
         return (
           <span className="badge bg-success">
@@ -256,7 +286,7 @@ export default function NotificationsClient() {
       return (
         <span className="badge bg-info text-dark">
           <i className="bi bi-calendar-event me-1"></i>
-          Agendado {new Date(item.sendDate).toLocaleDateString()}
+          Agendado {formattedDate}
         </span>
       );
     }
@@ -520,7 +550,7 @@ export default function NotificationsClient() {
                                 Parcela {String(idx + 1).padStart(2, "0")}/
                                 {String(form.installmentDates.length).padStart(2, "0")}
                               </strong>{" "}
-                              - {new Date(date + "T00:00:00").toLocaleDateString()}
+                              - {formatDateUTC(date + "T00:00:00")}
                             </span>
                             <button
                               type="button"
@@ -715,7 +745,7 @@ export default function NotificationsClient() {
                           {item.lastSent && (
                             <small className="text-muted">
                               <i className="bi bi-check-circle text-success me-1"></i>
-                              Enviado em: {new Date(item.lastSent).toLocaleString()}
+                              Enviado em: {new Date(item.lastSent).toLocaleString('pt-BR', { timeZone: 'UTC' })}
                             </small>
                           )}
                         </div>
