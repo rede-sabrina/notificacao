@@ -6,6 +6,7 @@ export interface INotification extends Document {
   recipients: string[];
   recurring?: boolean;
   dayOfMonth?: number;
+  /** First date on which a recurring notification can be sent. */
   sendDate?: Date;
   active?: boolean;
   lastSent?: Date;

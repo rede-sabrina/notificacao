@@ -32,6 +32,20 @@ export async function POST(request: Request) {
     } else {
       parsedSendDate = new Date(sendDate);
     }
+    if (Number.isNaN(parsedSendDate.getTime())) {
+      return new NextResponse(JSON.stringify({ error: 'Invalid send date' }), { status: 400 });
+    }
+  }
+
+  const parsedDayOfMonth = recurring ? Number(dayOfMonth) : undefined;
+  if (
+    recurring &&
+    (parsedDayOfMonth === undefined ||
+      !Number.isInteger(parsedDayOfMonth) ||
+      parsedDayOfMonth < 1 ||
+      parsedDayOfMonth > 31)
+  ) {
+    return new NextResponse(JSON.stringify({ error: 'Invalid recurring day' }), { status: 400 });
   }
 
   const doc = await Notification.create({
@@ -39,7 +53,7 @@ export async function POST(request: Request) {
     message,
     recipients,
     recurring: !!recurring,
-    dayOfMonth: recurring ? Number(dayOfMonth) : undefined,
+    dayOfMonth: parsedDayOfMonth,
     sendDate: parsedSendDate
   });
 

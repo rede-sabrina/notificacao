@@ -97,7 +97,15 @@ cron.schedule(schedulePattern, async () => {
 
   try {
     // recurring notifications for this day
-    const recurring = await Notification.find({ active: true, recurring: true, dayOfMonth: day });
+    const recurring = await Notification.find({
+      active: true,
+      recurring: true,
+      dayOfMonth: day,
+      $or: [
+        { sendDate: { $exists: false } },
+        { sendDate: { $lte: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999) } }
+      ]
+    });
     console.log('Worker found recurring:', recurring.length);
     for (const n of recurring) {
       await sendNotification(n);

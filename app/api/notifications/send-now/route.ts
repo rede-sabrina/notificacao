@@ -62,7 +62,15 @@ export async function POST(request: Request) {
 
   try {
     console.log('Checking notifications for day', day, 'range', start.toISOString(), end.toISOString());
-    const recurring = await Notification.find({ active: true, recurring: true, dayOfMonth: day });
+    const recurring = await Notification.find({
+      active: true,
+      recurring: true,
+      dayOfMonth: day,
+      $or: [
+        { sendDate: { $exists: false } },
+        { sendDate: { $lte: end } }
+      ]
+    });
     
     // One-time notifications scheduled for today only
     const ones = await Notification.find({ 

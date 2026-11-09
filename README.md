@@ -152,7 +152,7 @@ Para usar Gmail, você precisa de uma **Senha de App**:
    - **Título** e **mensagem**
    - **Destinatários** (um por linha)
    - Escolha entre:
-     - **Recorrente**: Digite o dia do mês (1-31)
+     - **Recorrente**: Escolha o dia do mês e a data do primeiro envio. Assim, você pode cadastrar agora um aviso que só começará em fevereiro (ou outra data futura) e continuará sendo enviado todos os meses.
      - **Única**: Escolha a data específica
 4. Clique em **Salvar**
 

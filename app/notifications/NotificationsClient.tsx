@@ -50,7 +50,12 @@ export default function NotificationsClient() {
 
   // Helper function to format UTC date string to local date without timezone issues
   function formatDateUTC(dateString: string): string {
+    const dateOnly = dateString.slice(0, 10);
+    const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOnly);
+    if (dateParts) return `${dateParts[3]}/${dateParts[2]}/${dateParts[1]}`;
+
     const dateObj = new Date(dateString);
+    if (Number.isNaN(dateObj.getTime())) return "Data inválida";
     const year = dateObj.getUTCFullYear();
     const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getUTCDate()).padStart(2, '0');
@@ -99,6 +104,8 @@ export default function NotificationsClient() {
       return "Informe pelo menos um destinatário";
     if (!form.recurring && !form.installmentMode && !form.sendDate)
       return "Informe uma data de envio ou ative o modo recorrente/parcelado";
+    if (form.recurring && !form.sendDate)
+      return "Informe a data do primeiro envio recorrente";
     if (form.installmentMode && form.installmentDates.length === 0)
       return "Selecione pelo menos uma data para as parcelas";
     return null;
@@ -164,7 +171,10 @@ export default function NotificationsClient() {
       recipients: form.recipients.split(",").map((s) => s.trim()).filter(Boolean),
       recurring: form.recurring,
     };
-    if (form.recurring) payload.dayOfMonth = Number(form.dayOfMonth);
+    if (form.recurring) {
+      payload.dayOfMonth = Number(form.dayOfMonth);
+      payload.sendDate = form.sendDate;
+    }
     else if (form.sendDate) payload.sendDate = form.sendDate;
 
     try {
@@ -494,7 +504,29 @@ export default function NotificationsClient() {
                     </select>
                     <div className="form-text mt-2">
                       <i className="bi bi-info-circle me-1"></i>
-                      Será enviado todo mês no dia selecionado
+                      Será enviado todo mês no dia selecionado, começando na data abaixo
+                    </div>
+                    <label className="form-label fw-semibold mt-3">
+                      <i className="bi bi-calendar-event me-1"></i>
+                      Primeiro envio:
+                    </label>
+                    <input
+                      type="date"
+                      value={form.sendDate}
+                      onChange={(e) =>
+                        setForm((s) => ({
+                          ...s,
+                          sendDate: e.target.value,
+                          dayOfMonth: e.target.value
+                            ? Number(e.target.value.slice(-2))
+                            : s.dayOfMonth,
+                        }))
+                      }
+                      className="form-control"
+                      required
+                    />
+                    <div className="form-text mt-2">
+                      Use uma data futura para cadastrar agora um aviso que só começará depois, como em fevereiro.
                     </div>
                   </div>
                 ) : form.installmentMode ? (
